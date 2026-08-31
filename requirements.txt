@@ -1,0 +1,34 @@
+# =============================================================================
+# requirements.txt
+# ----------------
+# Python dependencies for the Alzheimer's Federated AI project.
+# =============================================================================
+
+# Federated Learning
+flwr[simulation]>=1.10.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Explainable AI
+shap>=0.43.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+matplotlib>=3.7.0
+
+# API Gateway
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+
+# Dashboard
+streamlit>=1.30.0
+requests>=2.31.0
+plotly>=5.18.0
+
+# Utilities
+numpy>=1.24.0
+scikit-learn>=1.3.0
+pandas>=2.0.0

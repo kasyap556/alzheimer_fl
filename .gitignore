@@ -1,0 +1,23 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+saved_models/
+archive (2)/
+*.log
+*.tmp
+*.bak
+*.pth
+*.pt
+*.h5
+*.onnx
