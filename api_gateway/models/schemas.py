@@ -2,10 +2,26 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class PredictionRequest(BaseModel):
-    mri_image_base64: str = Field(..., description="Base64 encoded PNG or JPG MRI image")
-    clinical_features: List[float] = Field(..., min_length=9, max_length=9, description="9 clinical features: MMSE, CDR, Age, EDUC, nWBV, eTIV, ASF, SES, Gender")
-    feature_names: Optional[List[str]] = Field(None, description="Optional custom feature names")
-    include_xai: bool = Field(True, description="Whether to include GradCAM and SHAP explanations")
+    mri_image_base64: str = Field(
+        ...,
+        description="Base64 encoded PNG or JPG MRI image",
+    )
+    clinical_features: List[float] = Field(
+        ...,
+        min_length=9,
+        max_length=9,
+        description="9 clinical features: MMSE, CDR, Age, EDUC, nWBV, eTIV, ASF, SES, Gender",
+    )
+    feature_names: Optional[List[str]] = Field(
+        None,
+        min_length=9,
+        max_length=9,
+        description="Optional custom feature names",
+    )
+    include_xai: bool = Field(
+        True,
+        description="Whether to include GradCAM and SHAP explanations",
+    )
 
 class ClassProbabilities(BaseModel):
     mild_dementia: float
@@ -33,8 +49,8 @@ class SHAPResult(BaseModel):
     waterfall_plot_base64: str
 
 class ExplainabilityResult(BaseModel):
-    gradcam: GradCAMResult
-    shap: SHAPResult
+    gradcam: Optional[GradCAMResult] = None
+    shap: Optional[SHAPResult] = None
 
 class PredictionResponse(BaseModel):
     predicted_class_index: int
