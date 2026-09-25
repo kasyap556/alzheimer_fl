@@ -48,20 +48,11 @@ async def lifespan(app: FastAPI):
     model_service.load_model(weights_path, device)
     print("✓ Model loaded")
 
-    # SHAP background data must use the same feature representation as training.
-    # Do not use standard-normal random values for clinical features.
     background_data = None
     if SyntheticClinicalGenerator is not None:
         try:
             generator = SyntheticClinicalGenerator(seed=123)
-            samples = [
-                np.asarray(
-                    generator.generate_normalized(class_idx),
-                    dtype=np.float32,
-                ).reshape(1, -1)
-                for class_idx in range(len(model_service.CLASS_LABELS))
-            ]
-            background_data = np.concatenate(samples, axis=0)
+            background_data = generator.get_background_samples(n=40, normalize=True)
             print(f"✓ SHAP background data created: {background_data.shape}")
         except Exception as e:
             print(f"Warning: Could not create SHAP background data: {e}")
@@ -89,7 +80,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Alzheimer's FL API Gateway", lifespan=lifespan)
 
-# Keep credentialed CORS restricted to the local dashboard by default.
 cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:8501").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -104,13 +94,16 @@ app.add_middleware(
 async def predict(request: PredictionRequest):
     try:
         mri_tensor = model_service.decode_mri_base64(request.mri_image_base64)
-        clinical_tensor = torch.tensor(
+        raw_clinical_tensor = torch.tensor(
             [request.clinical_features], dtype=torch.float32
         )
+        clinical_tensor = model_service.preprocess_clinical(raw_clinical_tensor)
         clinical_np = clinical_tensor.numpy()
 
-        logits, probs, class_idx, class_label, confidence = model_service.predict(
-            mri_tensor, clinical_tensor
+        # Pass raw values to predict; ModelService applies the same normalization
+        # internally. Use the normalized tensor for Grad-CAM/SHAP as well.
+        _, probs, class_idx, class_label, confidence = model_service.predict(
+            mri_tensor, raw_clinical_tensor
         )
 
         class_probs = ClassProbabilities(
@@ -138,6 +131,9 @@ async def predict(request: PredictionRequest):
 
             shap_result_obj = None
             if shap_service is not None:
+                if request.feature_names is not None:
+                    shap_service.feature_names = request.feature_names
+
                 shap_res = shap_service.explain(
                     mri_tensor, clinical_np, class_idx
                 )
